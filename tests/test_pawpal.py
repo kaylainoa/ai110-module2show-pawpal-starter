@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from pawpal_system import Pet, Scheduler, Task
+from pawpal_system import Owner, Pet, Scheduler, Task
 
 
 def test_mark_complete_changes_task_status():
@@ -99,3 +99,63 @@ def test_detect_conflicts_ignores_completed_tasks():
     task_b = Task(id="t2", title="New feeding", duration_minutes=10, priority="high", category="feeding", time="08:00")
 
     assert scheduler.detect_conflicts([task_a, task_b]) == []
+
+
+def test_detect_conflicts_with_no_duplicate_times_returns_empty_list():
+    scheduler = Scheduler()
+    task_a = Task(id="t1", title="Feeding", duration_minutes=10, priority="high", category="feeding", time="08:00")
+    task_b = Task(id="t2", title="Walk", duration_minutes=30, priority="high", category="walk", time="09:00")
+
+    assert scheduler.detect_conflicts([task_a, task_b]) == []
+
+
+def test_sort_by_time_with_empty_list_returns_empty_list():
+    scheduler = Scheduler()
+
+    assert scheduler.sort_by_time([]) == []
+
+
+def test_build_plan_with_no_tasks_returns_empty_plan():
+    scheduler = Scheduler()
+
+    assert scheduler.build_plan([], available_minutes=60) == []
+
+
+def test_build_plan_prioritizes_and_skips_when_time_runs_out():
+    scheduler = Scheduler()
+    high = Task(id="t1", title="Meds", duration_minutes=10, priority="high", category="meds")
+    medium = Task(id="t2", title="Walk", duration_minutes=10, priority="medium", category="walk")
+    low = Task(id="t3", title="Playtime", duration_minutes=10, priority="low", category="enrichment")
+
+    # Passed in shuffled order to confirm build_plan sorts by priority itself.
+    plan = scheduler.build_plan([low, medium, high], available_minutes=25)
+
+    scheduled_titles = [task.title for _, task in plan]
+    assert scheduled_titles == ["Meds", "Walk"]
+
+
+def test_owner_all_tasks_aggregates_multiple_pets():
+    owner = Owner(name="Jordan")
+    mochi = Pet(name="Mochi", species="cat")
+    biscuit = Pet(name="Biscuit", species="dog")
+    owner.add_pet(mochi)
+    owner.add_pet(biscuit)
+    mochi.add_task(Task(id="t1", title="Feeding", duration_minutes=10, priority="high", category="feeding"))
+    biscuit.add_task(Task(id="t2", title="Walk", duration_minutes=30, priority="high", category="walk"))
+
+    all_tasks = owner.all_tasks()
+
+    assert {t.id for t in all_tasks} == {"t1", "t2"}
+
+
+def test_next_occurrence_weekly_adds_seven_days():
+    task = Task(
+        id="t1", title="Grooming", duration_minutes=45, priority="medium", category="grooming", frequency="weekly"
+    )
+
+    next_task = task.next_occurrence()
+
+    assert next_task is not None
+    assert next_task.due_date == date.today() + timedelta(weeks=1)
+    assert next_task.completed is False
+    assert next_task.id != task.id
