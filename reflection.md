@@ -39,8 +39,9 @@ After writing the skeleton, I reviewed `pawpal_system.py` for missing relationsh
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+`Scheduler.detect_conflicts()` only flags tasks that share the *exact same* `time` string (e.g. two tasks both at `"08:00"`). It does not check whether one task's duration overlaps into another task's start time — e.g. a 30-minute "Morning walk" at `08:00` and a 10-minute "Feeding" at `08:15` would not be flagged, even though the walk is still running when the feeding is supposed to start.
+
+I chose this on purpose: exact-match comparison is a simple string/dict lookup (`O(n)`, no interval math), while true overlap detection needs sorting tasks by start time and comparing each task's `[start, start + duration]` window against its neighbors — more code and more edge cases (back-to-back tasks, zero-duration tasks, etc.) for a starter app. Exact-match conflicts are also the more common real mistake a pet owner would make (accidentally double-booking the same time slot), so catching that case covers most of the practical value. It's a reasonable v1 tradeoff, but a known gap: it would miss a genuinely overlapping schedule that doesn't start at the same minute.
 
 ---
 

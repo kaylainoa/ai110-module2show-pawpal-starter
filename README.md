@@ -44,16 +44,33 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Output from running `python main.py` (Owner with two pets, four tasks, 60-minute budget):
+Output from running `python main.py`:
 
 ```
+=== Sorted by time ===
+  08:00 — Feeding (Mochi)
+  08:00 — Morning walk (Biscuit)
+  12:00 — Litter box cleanup (Mochi)
+  17:00 — Fetch playtime (Biscuit)
+  18:00 — Evening walk (Biscuit)
+
+=== Filtered: Mochi's incomplete tasks ===
+  08:00 — Feeding
+  12:00 — Litter box cleanup
+
+=== Recurring task: completing Mochi's daily feeding (t2) ===
+  t2: Feeding (done), due 2026-07-08
+  t4: Litter box cleanup (pending), due 2026-07-08
+  t2-2026-07-09: Feeding (pending), due 2026-07-09
+
+=== Conflict detection ===
+  WARNING: Conflict at 08:00: Feeding (Mochi), Morning walk (Biscuit), Vet check-in call (Biscuit)
+
 Today's Schedule:
   08:00 — Feeding (10 min) [priority: high] for Mochi
-  08:10 — Morning walk (30 min) [priority: high] for Biscuit
+  08:10 — Evening walk (30 min) [priority: high] for Biscuit
   08:40 — Litter box cleanup (15 min) [priority: medium] for Mochi
 ```
-
-Note: "Fetch playtime" (20 min, low priority) was correctly left off the plan — only 5 minutes remained after the higher-priority tasks were scheduled.
 
 ## 🧪 Testing PawPal+
 
@@ -73,14 +90,13 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()` | Orders tasks chronologically by their `HH:MM` `time` field. |
+| Priority-based planning | `Scheduler.build_plan()` | Sorts by priority then duration and greedily fits tasks into a time budget, skipping lower-priority tasks once time runs out. Ignores already-`completed` tasks. |
+| Filtering | `Scheduler.filter_tasks()` | Filters by pet name and/or completion status (either or both, independently optional). |
+| Conflict handling | `Scheduler.detect_conflicts()` | Flags tasks that share the exact same `time` and returns human-readable warning strings instead of raising — see reflection.md 2b for the exact-match-vs-overlap tradeoff. |
+| Recurring tasks | `Task.next_occurrence()`, `Pet.mark_task_complete()` | Completing a `daily`/`weekly` task auto-creates the next occurrence, due `today + 1 day` or `today + 1 week`. |
 
 ## 📸 Demo Walkthrough
 

@@ -15,6 +15,7 @@ classDiagram
         +List~Task~ tasks
         +add_task(task: Task) None
         +remove_task(task_id: str) None
+        +mark_task_complete(task_id: str) None
     }
 
     class Task {
@@ -23,15 +24,21 @@ classDiagram
         +int duration_minutes
         +str priority
         +str category
-        +bool is_recurring
+        +str time
+        +str frequency
+        +date due_date
         +bool completed
         +str pet_name
         +mark_complete() None
+        +next_occurrence() Task
     }
 
     class Scheduler {
         +build_plan(tasks: List~Task~, available_minutes: int) List~Tuple~
         +explain_plan(plan: List~Tuple~) str
+        +sort_by_time(tasks: List~Task~) List~Task~
+        +filter_tasks(tasks: List~Task~, pet_name: str, completed: bool) List~Task~
+        +detect_conflicts(tasks: List~Task~) List~str~
     }
 
     Owner "1" --> "many" Pet : owns
